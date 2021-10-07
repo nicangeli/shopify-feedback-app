@@ -21,3 +21,4 @@ config/tunnel.pid
 .next/
 
 db.sqlite3
+db.sqbpro
