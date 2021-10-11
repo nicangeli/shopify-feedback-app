@@ -6,7 +6,8 @@ import Shopify, { ApiVersion } from '@shopify/shopify-api'
 import Koa from 'koa'
 import next from 'next'
 import Router from 'koa-router'
-import { insertShop, getShop } from './db'
+import bodyParser from 'koa-bodyparser'
+import { insertShop, getShop, updateShop } from './db'
 
 dotenv.config()
 const port = parseInt(process.env.PORT, 10) || 8081
@@ -67,6 +68,24 @@ app.prepare().then(async () => {
             await Shopify.Utils.graphqlProxy(ctx.req, ctx.res)
         }
     )
+
+    router.get('/api/shop', async (ctx) => {
+        const shop = ctx.query.shop
+        const body = await getShop(shop)
+
+        ctx.response.status = 200
+        ctx.response.body = body
+    })
+
+    router.post('/api/shop', bodyParser(), async (ctx) => {
+        console.log(ctx.request.body)
+        const shop = ctx.query.shop
+        await updateShop(shop, ctx.request.body)
+        const body = await getShop(shop)
+
+        ctx.response.status = 200
+        ctx.response.body = body
+    })
 
     router.get('(/_next/static/.*)', handleRequest) // Static content is clear
     router.get('/_next/webpack-hmr', handleRequest) // Webpack content is clear

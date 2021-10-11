@@ -5,9 +5,9 @@ exports.up = function (knex) {
         table.string('domain')
 
         table.string('question')
-        table.string('answerLabel1')
-        table.string('answerLabel2')
-        table.string('answerLabel3')
+        table.string('answerA')
+        table.string('answerB')
+        table.string('answerC')
 
         table.string('buttonColor')
 

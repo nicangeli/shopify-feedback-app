@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
     Heading,
     Page,
@@ -13,16 +13,34 @@ import {
 } from '@shopify/polaris'
 
 const Index = () => {
-    const [form, setForm] = useState({
-        color: {
-            hue: 120,
-            brightness: 1,
-            saturation: 1,
-        },
-    })
+    const [form, setForm] = useState()
+
+    useEffect(() => {
+        fetch('/api/shop?shop=nick-angeli-test-store.myshopify.com')
+            .then((res) => res.json())
+            .then((res) => setForm(res))
+    }, [])
+
+    if (!form) {
+        return 'Loading'
+    }
+
     return (
         <Page>
-            <Form onSubmit={() => console.log(form)}>
+            <Form
+                onSubmit={() => {
+                    fetch(
+                        '/api/shop?shop=nick-angeli-test-store.myshopify.com',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(form),
+                        }
+                    )
+                }}
+            >
                 <Heading>Application Settings</Heading>
                 <FormLayout>
                     <Layout.AnnotatedSection
@@ -34,9 +52,9 @@ const Index = () => {
                                 <TextField
                                     label="Question Title"
                                     type="text"
-                                    value={form.title}
-                                    onChange={(title) =>
-                                        setForm({ ...form, title })
+                                    value={form.question}
+                                    onChange={(question) =>
+                                        setForm({ ...form, question })
                                     }
                                     helpText="We’ll use this as the question title we ask your customers"
                                 />
@@ -60,9 +78,9 @@ const Index = () => {
                             </SettingToggle>
                             <Card sectioned title="Button Color">
                                 <ColorPicker
-                                    color={form.color}
-                                    onChange={(color) =>
-                                        setForm({ ...form, color })
+                                    color={form.buttonColor}
+                                    onChange={(buttonColor) =>
+                                        setForm({ ...form, buttonColor })
                                     }
                                 />
                             </Card>
