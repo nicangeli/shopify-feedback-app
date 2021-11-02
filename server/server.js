@@ -6,7 +6,9 @@ import Shopify, { ApiVersion } from '@shopify/shopify-api'
 import Koa from 'koa'
 import next from 'next'
 import Router from 'koa-router'
-import bodyParser from 'koa-bodyparser'
+import ApiRouter from './api'
+import { storeCallback, loadCallback, deleteCallback } from './redis'
+
 import { insertShop, getShop, updateShop } from './db'
 
 dotenv.config()
@@ -25,7 +27,11 @@ Shopify.Context.initialize({
     API_VERSION: ApiVersion.October20,
     IS_EMBEDDED_APP: true,
     // This should be replaced with your preferred storage strategy
-    SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
+    SESSION_STORAGE: new Shopify.Session.CustomSessionStorage(
+        storeCallback,
+        loadCallback,
+        deleteCallback
+    ),
 })
 
 app.prepare().then(async () => {
@@ -69,29 +75,17 @@ app.prepare().then(async () => {
         }
     )
 
-    router.get('/api/shop', async (ctx) => {
-        const shop = ctx.query.shop
-        const body = await getShop(shop)
-
-        ctx.response.status = 200
-        ctx.response.body = body
-    })
-
-    router.post('/api/shop', bodyParser(), async (ctx) => {
-        console.log(ctx.request.body)
-        const shop = ctx.query.shop
-        await updateShop(shop, ctx.request.body)
-        const body = await getShop(shop)
-
-        ctx.response.status = 200
-        ctx.response.body = body
-    })
+    server.use(ApiRouter.allowedMethods())
+    server.use(ApiRouter.routes())
 
     router.get('(/_next/static/.*)', handleRequest) // Static content is clear
     router.get('/_next/webpack-hmr', handleRequest) // Webpack content is clear
     router.get('(.*)', async (ctx) => {
+        console.log('In the catchall')
+
         const shop = ctx.query.shop
         const isShopInstalled = Boolean(await getShop(shop))
+        console.log(isShopInstalled)
         // This shop hasn't been seen yet, go through OAuth to create a session
         if (!isShopInstalled) {
             ctx.redirect(`/auth?shop=${shop}`)
@@ -102,6 +96,7 @@ app.prepare().then(async () => {
 
     server.use(router.allowedMethods())
     server.use(router.routes())
+
     server.listen(port, () => {
         console.log(`> Ready on http://localhost:${port}`)
     })

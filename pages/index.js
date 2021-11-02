@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
+import { authenticatedFetch } from '@shopify/app-bridge-utils'
+import { Provider, useAppBridge } from '@shopify/app-bridge-react'
+import { FetchContext } from './_app'
 import {
     Heading,
     Page,
@@ -13,10 +16,11 @@ import {
 } from '@shopify/polaris'
 
 const Index = () => {
+    const fetchFunction = useContext(FetchContext)
     const [form, setForm] = useState()
 
     useEffect(() => {
-        fetch('/api/shop?shop=nick-angeli-test-store.myshopify.com')
+        fetchFunction('/api/shop', { credentials: 'include' })
             .then((res) => res.json())
             .then((res) => setForm(res))
     }, [])
@@ -29,16 +33,14 @@ const Index = () => {
         <Page>
             <Form
                 onSubmit={() => {
-                    fetch(
-                        '/api/shop?shop=nick-angeli-test-store.myshopify.com',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(form),
-                        }
-                    )
+                    fetchFunction('/api/shop', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(form),
+                    })
                 }}
             >
                 <Heading>Application Settings</Heading>
